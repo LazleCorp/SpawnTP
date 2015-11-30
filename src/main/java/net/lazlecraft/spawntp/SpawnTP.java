@@ -274,7 +274,7 @@ public class SpawnTP extends JavaPlugin implements Listener {
 		if (!ev.getPlayer().hasPlayedBefore()) {
 			sendNewJoin(ev.getPlayer());
 			if (aFJ) {
-				Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM));
+				Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM.replace("%player%", p.getName())));
 			}
 		}
 	}
