@@ -263,18 +263,19 @@ public class SpawnTP extends JavaPlugin implements Listener {
 	//SpawnTP
 	@EventHandler
 	public void onJoin(PlayerJoinEvent ev) { 
+	Player p = ev.getPlayer();
 	if (sTP && !oNJ) {
-		Player p = ev.getPlayer();
+		
 		if (!p.hasPermission("spawntp.bypass")) {
 			if (!getConfig().getStringList("DisabledInWorld").contains(p.getLocation().getWorld().getName())) {
 		sendSpawn(p);
 			}
 		}
 	} if (oNJ) {
-		if (!ev.getPlayer().hasPlayedBefore()) {
-			sendNewJoin(ev.getPlayer());
+		if (!p.hasPlayedBefore()) {
+			sendNewJoin(p);
 			if (aFJ) {
-				Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM));
+				Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM.replace("%player%", p.getName())));
 			}
 		}
 	}
