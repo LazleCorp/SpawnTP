@@ -16,10 +16,13 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -151,7 +154,6 @@ public class SpawnTP extends JavaPlugin implements Listener {
         		}
         	}
         }
-        
         else if (commandLabel.equalsIgnoreCase("spawn") && (sender.hasPermission("spawntp.spawn"))) {
         	if(args.length == 0) {
             	sendSpawn(p);
@@ -162,7 +164,7 @@ public class SpawnTP extends JavaPlugin implements Listener {
             		}
             	else sender.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix) + ChatColor.RED + "Player does not exist!");
         	}
-     } 
+        } 
         else if (commandLabel.equalsIgnoreCase("spawntp")) {
         	p.sendMessage(realPrefix + ChatColor.GOLD + "This plugin is made by the almighty LaxWasHere");
         	p.sendMessage(realPrefix + ChatColor.GOLD + "Running version " + ChatColor.RED + this.getDescription().getVersion());
@@ -180,6 +182,8 @@ public class SpawnTP extends JavaPlugin implements Listener {
         		p.teleport(p.getWorld().getSpawnLocation().add(.5, .5, .5));
         		p.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix) + ChatColor.RED + "No world spawn set, you have been sent to default world spawn");
         	}
+        }else {
+        	return false;
         }
         return true;
 	}
@@ -260,25 +264,27 @@ public class SpawnTP extends JavaPlugin implements Listener {
 		}
 	}
 	
+	
 	//SpawnTP
 	@EventHandler
 	public void onJoin(PlayerJoinEvent ev) { 
-	if (sTP && !oNJ) {
 		Player p = ev.getPlayer();
-		if (!p.hasPermission("spawntp.bypass")) {
-			if (!getConfig().getStringList("DisabledInWorld").contains(p.getLocation().getWorld().getName())) {
-		sendSpawn(p);
+		if (sTP && !oNJ) {
+			if (!p.hasPermission("spawntp.bypass")) {
+				if (!getConfig().getStringList("DisabledInWorld").contains(p.getLocation().getWorld().getName())) {
+					sendSpawn(p);
+				}
+			}
+		} 
+		if (oNJ) {
+			if (!p.hasPlayedBefore()) {
+				sendNewJoin(p);
+				if (aFJ) {
+					Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM.replace("%player%", p.getName())));
+				}
 			}
 		}
-	} if (oNJ) {
-		if (!ev.getPlayer().hasPlayedBefore()) {
-			sendNewJoin(ev.getPlayer());
-			if (aFJ) {
-				Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', nJM));
-			}
-		}
-	}
-}	
+	}	
 	
 	public void checkConfig() {
 		if (getConfig().getInt("ConfigVersion") != 2) {
@@ -311,6 +317,28 @@ public class SpawnTP extends JavaPlugin implements Listener {
 		getConfig().set(configLoc, location);
 	}
 	
+	@EventHandler(priority=EventPriority.HIGH)
+	public void onPlayerRespawnEvent(PlayerRespawnEvent event) {
+		Player player = event.getPlayer();
+		
+		if (!player.hasPlayedBefore() || player.getBedSpawnLocation() == null || !event.isBedSpawn()) {
+			Location spawnLoc;
+			if (FsWorld == null) {
+				if (sWorld == null) {
+					spawnLoc = player.getWorld().getSpawnLocation().add(0.5,0.5,0.5);
+				}else {
+					spawnLoc = new Location(Bukkit.getServer().getWorld(sWorld), sX, sY, sZ, sYaw, sPitch);
+				}
+			}else {
+				spawnLoc = new Location(Bukkit.getServer().getWorld(FsWorld), FsX, FsY, FsZ, FsYaw, FsPitch);
+			}
+			event.setRespawnLocation(spawnLoc);
+			if (getConfig().getBoolean("LogTeleport")) {
+	    		Bukkit.getConsoleSender().sendMessage(realPrefix + ChatColor.GOLD + "Sent " + player.getName() + " to spawn");
+	    	}
+		}
+	}
+	
 	public void sendSpawn(Player p) {
 		if (sWorld == null)
 			p.teleport(p.getWorld().getSpawnLocation().add(0.5,0.5,0.5));
@@ -321,6 +349,8 @@ public class SpawnTP extends JavaPlugin implements Listener {
     		Bukkit.getConsoleSender().sendMessage(realPrefix + ChatColor.GOLD + "Sent " + p.getName() + " to spawn");
     	}
     }
+		
+		
   }
 }
 //LaxWasHere
